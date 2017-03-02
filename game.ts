@@ -9,8 +9,6 @@ class Game
     private _camera: BABYLON.FreeCamera;
     private _light: BABYLON.Light;
 
-    private car:Car;
-
     constructor(canvasElement:string)
     {
         this._canvas = <HTMLCanvasElement> document.getElementById(canvasElement);
