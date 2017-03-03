@@ -32,6 +32,10 @@ class Game
 
         let camera = new BABYLON.FreeCamera('FreeCam', new BABYLON.Vector3(0, 5, -20), this.scene);
         camera.attachControl(this.engine.getRenderingCanvas());
+        camera.keysUp.push(87); // "w"
+	    camera.keysDown.push(83); // "s"
+	    camera.keysLeft.push(65); // "a"
+	    camera.keysRight.push(68); // "d"
         //camera.wheelPrecision *= 10;
 
         let light = new BABYLON.HemisphericLight('hemisphericLight', new BABYLON.Vector3(0, 1, 0), this.scene);
@@ -64,7 +68,21 @@ class Game
     {
         this.scene.debugLayer.show();
 
-        this.createAsset('nature_small');
+        let res = this.createAsset('nature_small');
+
+        this.prepWorld(res as Array<BABYLON.Mesh>);
+    }
+
+    private prepWorld(assetToUse:Array<BABYLON.Mesh>)
+    {
+        let range = 100;
+
+        for(var i = 0; i < assetToUse.length; i++)
+        {
+            assetToUse[i].position.x = Math.random() * range - range/2;
+            assetToUse[i].position.z = Math.random() * range - range/2;
+            assetToUse[i].rotation.y = Math.PI;
+        }
     }
 
     public createAsset(name:string, mode:number=Game.SELF) : Array<BABYLON.AbstractMesh>
@@ -79,7 +97,7 @@ class Game
                     mesh.setEnabled(true);
                     res.push(mesh);
                     break;
-                    
+
                 case Game.CLONE:
                     res.push(mesh.clone());
                     break;
@@ -95,11 +113,13 @@ class Game
     private _runGame()
     {
         window.addEventListener('keydown', (evt) => {
-            if (evt.keyCode == 32)
+            switch(evt.keyCode)
             {
-
+                case 32:
+                    console.log("In space!!!!!!!!!");
+                    break;
             }
-        })
+        });
     }
 }
 

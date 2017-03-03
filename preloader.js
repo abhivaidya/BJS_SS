@@ -25,13 +25,12 @@ var Preloader = (function () {
     };
     Preloader.prototype._addMeshAssetToGame = function (t) {
         this._game.assets[t.name] = [];
-        console.group();
         for (var _i = 0, _a = t.loadedMeshes; _i < _a.length; _i++) {
             var m = _a[_i];
+            m.convertToFlatShadedMesh();
             m.setEnabled(false);
             this._game.assets[t.name].push(m);
         }
-        console.groupEnd();
     };
     return Preloader;
 }());

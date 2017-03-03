@@ -15,6 +15,10 @@ var Game = (function () {
         this.scene = new BABYLON.Scene(this.engine);
         var camera = new BABYLON.FreeCamera('FreeCam', new BABYLON.Vector3(0, 5, -20), this.scene);
         camera.attachControl(this.engine.getRenderingCanvas());
+        camera.keysUp.push(87);
+        camera.keysDown.push(83);
+        camera.keysLeft.push(65);
+        camera.keysRight.push(68);
         var light = new BABYLON.HemisphericLight('hemisphericLight', new BABYLON.Vector3(0, 1, 0), this.scene);
         light.intensity *= 1.5;
         var loader = new Preloader(this);
@@ -35,7 +39,16 @@ var Game = (function () {
     };
     Game.prototype._init = function () {
         this.scene.debugLayer.show();
-        this.createAsset('nature_small');
+        var res = this.createAsset('nature_small');
+        this.prepWorld(res);
+    };
+    Game.prototype.prepWorld = function (assetToUse) {
+        var range = 100;
+        for (var i = 0; i < assetToUse.length; i++) {
+            assetToUse[i].position.x = Math.random() * range - range / 2;
+            assetToUse[i].position.z = Math.random() * range - range / 2;
+            assetToUse[i].rotation.y = Math.PI;
+        }
     };
     Game.prototype.createAsset = function (name, mode) {
         if (mode === void 0) { mode = Game.SELF; }
@@ -59,7 +72,10 @@ var Game = (function () {
     };
     Game.prototype._runGame = function () {
         window.addEventListener('keydown', function (evt) {
-            if (evt.keyCode == 32) {
+            switch (evt.keyCode) {
+                case 32:
+                    console.log("In space!!!!!!!!!");
+                    break;
             }
         });
     };

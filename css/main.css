@@ -27,7 +27,6 @@ html, body {
       justify-content: center;
   -ms-flex-align: center;
       align-items: center;
-  background-image: url("../img/back.jpg");
   pointer-events: none;
   -webkit-user-select: none;
      -moz-user-select: none;

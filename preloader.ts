@@ -45,15 +45,16 @@ class Preloader
     private _addMeshAssetToGame(t: BABYLON.MeshAssetTask)
     {
         this._game.assets[t.name] = [];
-        console.group();
+        //console.group();
         for (let m of t.loadedMeshes)
         {
+            (m as BABYLON.Mesh).convertToFlatShadedMesh();
             m.setEnabled(false);
             this._game.assets[t.name].push(m);
             //console.log(`%c Loaded : ${m.name}`, 'background: #333; color: #bada55');
         }
         //console.log(`%c Finished : ${t.name}`, 'background: #333; color: #bada55');
 
-        console.groupEnd();
+        //console.groupEnd();
     }
 }
