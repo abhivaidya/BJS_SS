@@ -1,51 +1,74 @@
 var Game = (function () {
     function Game(canvasElement) {
-        this._canvas = document.getElementById(canvasElement);
-        this._engine = new BABYLON.Engine(this._canvas, true);
-        this._engine.enableOfflineSupport = false;
+        var _this = this;
+        var canvas = document.getElementById(canvasElement);
+        this.engine = new BABYLON.Engine(canvas, true);
+        this.engine.enableOfflineSupport = false;
+        this.assets = [];
+        this.scene = null;
+        window.addEventListener("resize", function () {
+            _this.engine.resize();
+        });
+        this.initScene();
     }
-    Game.prototype.createScene = function () {
-        this._scene = new BABYLON.Scene(this._engine);
-        this._scene.clearColor = new BABYLON.Color3(0.894, 0.878, 0.729);
-        this._scene.debugLayer.show();
-        this._camera = new BABYLON.FreeCamera("freeCamera", new BABYLON.Vector3(0, 5, -20), this._scene);
-        this._camera.attachControl(this._canvas, false);
-        this._camera.setTarget(BABYLON.Vector3.Zero());
-        this._light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 0.2, -20), this._scene);
-        this._light.intensity = 0.75;
-        var ground = BABYLON.MeshBuilder.CreateGround('ground1', { width: 100, height: 75, subdivisions: 2 }, this._scene);
-        var groundMat = new BABYLON.StandardMaterial("groundMat", this._scene);
-        ground.material = groundMat;
-        groundMat.diffuseColor = BABYLON.Color3.Blue();
-        BABYLON.SceneLoader.ImportMesh("", "assets/3d/", "nature_small.babylon", this._scene, function (newMeshes, particleSystems) {
-            var range = 100;
-            for (var i = 0; i < newMeshes.length; i++) {
-                if (newMeshes[i].material instanceof BABYLON.MultiMaterial) {
-                    for (var j = 0; j < newMeshes[i].material.subMaterials.length; j++) {
-                        newMeshes[i].material.subMaterials[j].specularColor = BABYLON.Color3.Black();
-                    }
-                }
-                newMeshes[i].position.x = Math.random() * range - range / 2;
-                newMeshes[i].position.z = Math.random() * range - range / 2;
-                newMeshes[i].rotation.y = Math.PI;
-                newMeshes[i].convertToFlatShadedMesh();
-            }
+    Game.prototype.initScene = function () {
+        this.scene = new BABYLON.Scene(this.engine);
+        var camera = new BABYLON.FreeCamera('FreeCam', new BABYLON.Vector3(0, 5, -20), this.scene);
+        camera.attachControl(this.engine.getRenderingCanvas());
+        var light = new BABYLON.HemisphericLight('hemisphericLight', new BABYLON.Vector3(0, 1, 0), this.scene);
+        light.intensity *= 1.5;
+        var loader = new Preloader(this);
+        loader.callback = this.run.bind(this);
+        loader.loadAssets();
+    };
+    Game.prototype.run = function () {
+        var _this = this;
+        this.scene.executeWhenReady(function () {
+            var loader = document.querySelector("#splashscreen");
+            loader.style.display = "none";
+            _this._init();
+            _this.engine.runRenderLoop(function () {
+                _this.scene.render();
+            });
+            _this._runGame();
         });
     };
-    Game.prototype.animate = function () {
-        var _this = this;
-        this._engine.runRenderLoop(function () {
-            _this._scene.render();
-        });
-        window.addEventListener('resize', function () {
-            _this._engine.resize();
+    Game.prototype._init = function () {
+        this.scene.debugLayer.show();
+        this.createAsset('nature_small');
+    };
+    Game.prototype.createAsset = function (name, mode) {
+        if (mode === void 0) { mode = Game.SELF; }
+        var res = [];
+        for (var _i = 0, _a = this.assets[name]; _i < _a.length; _i++) {
+            var mesh = _a[_i];
+            switch (mode) {
+                case Game.SELF:
+                    mesh.setEnabled(true);
+                    res.push(mesh);
+                    break;
+                case Game.CLONE:
+                    res.push(mesh.clone());
+                    break;
+                case Game.INSTANCE:
+                    res.push(mesh.createInstance());
+                    break;
+            }
+        }
+        return res;
+    };
+    Game.prototype._runGame = function () {
+        window.addEventListener('keydown', function (evt) {
+            if (evt.keyCode == 32) {
+            }
         });
     };
     return Game;
 }());
+Game.SELF = 0;
+Game.CLONE = 1;
+Game.INSTANCE = 2;
 window.addEventListener("DOMContentLoaded", function () {
-    var game = new Game('renderCanvas');
-    game.createScene();
-    game.animate();
+    new Game('renderCanvas');
 });
 //# sourceMappingURL=game.js.map

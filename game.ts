@@ -1,84 +1,108 @@
 /// <reference path = "lib/babylon.d.ts"/>
-/// <reference path = "car.ts"/>
 
 class Game
 {
-    private _canvas: HTMLCanvasElement;
-    private _engine: BABYLON.Engine;
-    private _scene: BABYLON.Scene;
-    private _camera: BABYLON.FreeCamera;
-    private _light: BABYLON.Light;
+    private engine: BABYLON.Engine;
+    public assets: Array<BABYLON.AbstractMesh>;
+    public scene: BABYLON.Scene;
+
+    public static SELF : number = 0;
+    public static CLONE : number = 1;
+    public static INSTANCE : number = 2;
 
     constructor(canvasElement:string)
     {
-        this._canvas = <HTMLCanvasElement> document.getElementById(canvasElement);
-        this._engine = new BABYLON.Engine(this._canvas, true);
-        this._engine.enableOfflineSupport = false;
+        let canvas: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById(canvasElement);
+        this.engine = new BABYLON.Engine(canvas, true);
+        this.engine.enableOfflineSupport = false;
+
+        this.assets = [];
+        this.scene = null;
+
+        window.addEventListener("resize", () => {
+            this.engine.resize();
+        });
+
+        this.initScene();
     }
 
-    createScene():void
+    private initScene()
     {
-        this._scene = new BABYLON.Scene(this._engine);
-        this._scene.clearColor = new BABYLON.Color3(0.894, 0.878, 0.729);
-        /*
-        this._scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
-        this._scene.fogColor = new BABYLON.Color3(0.968, 0.85, 0.67);
-        this._scene.fogStart = 20.0;
-        this._scene.fogEnd = 40.0;
-        */
-        this._scene.debugLayer.show();
+        this.scene = new BABYLON.Scene(this.engine);
 
-        this._camera = new BABYLON.FreeCamera("freeCamera", new BABYLON.Vector3(0, 5, -20), this._scene);
-        this._camera.attachControl(this._canvas, false);
-        this._camera.setTarget(BABYLON.Vector3.Zero());
+        let camera = new BABYLON.FreeCamera('FreeCam', new BABYLON.Vector3(0, 5, -20), this.scene);
+        camera.attachControl(this.engine.getRenderingCanvas());
+        //camera.wheelPrecision *= 10;
 
-        this._light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 0.2, -20), this._scene);
-        //this._light = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(0, 5, 10), this._scene);
-        this._light.intensity = 0.75;
+        let light = new BABYLON.HemisphericLight('hemisphericLight', new BABYLON.Vector3(0, 1, 0), this.scene);
+        light.intensity *= 1.5;
 
-        let ground = BABYLON.MeshBuilder.CreateGround('ground1', {width: 100, height: 75, subdivisions: 2}, this._scene);
-        let groundMat = new BABYLON.StandardMaterial("groundMat", this._scene);
-        ground.material = groundMat;
-        groundMat.diffuseColor = BABYLON.Color3.Blue();
+        let loader = new Preloader(this);
+        loader.callback = this.run.bind(this);
+        loader.loadAssets();
+    }
 
-        //this.car = new Car(this._scene);
+    private run()
+    {
+        this.scene.executeWhenReady(() => {
 
-        BABYLON.SceneLoader.ImportMesh("", "assets/3d/", "nature_small.babylon", this._scene, function (newMeshes, particleSystems)
+            // Remove loader
+            var loader = <HTMLElement> document.querySelector("#splashscreen");
+            loader.style.display = "none";
+
+            this._init();
+
+            this.engine.runRenderLoop(() => {
+                this.scene.render();
+            });
+
+            this._runGame();
+        });
+    }
+
+    private _init ()
+    {
+        this.scene.debugLayer.show();
+
+        this.createAsset('nature_small');
+    }
+
+    public createAsset(name:string, mode:number=Game.SELF) : Array<BABYLON.AbstractMesh>
+    {
+        let res : Array<BABYLON.AbstractMesh> = [];
+
+        for (let mesh of this.assets[name])
         {
-            let range = 100;
-
-            for(var i = 0; i < newMeshes.length; i++)
+            switch (mode)
             {
-                if(newMeshes[i].material instanceof BABYLON.MultiMaterial)
-                {
-                    for(var j = 0; j < (newMeshes[i].material as BABYLON.MultiMaterial).subMaterials.length; j++)
-                    {
-                        ((newMeshes[i].material as BABYLON.MultiMaterial).subMaterials[j] as BABYLON.StandardMaterial).specularColor = BABYLON.Color3.Black();
-                    }
-                }
+                case Game.SELF:
+                    mesh.setEnabled(true);
+                    res.push(mesh);
+                    break;
+                    
+                case Game.CLONE:
+                    res.push(mesh.clone());
+                    break;
 
-                newMeshes[i].position.x = Math.random() * range - range/2;
-                newMeshes[i].position.z = Math.random() * range - range/2;
-                newMeshes[i].rotation.y = Math.PI;
-                (newMeshes[i] as BABYLON.Mesh).convertToFlatShadedMesh();
+                case Game.INSTANCE:
+                    res.push(mesh.createInstance());
+                    break;
             }
-        });
+        }
+        return res;
     }
 
-    animate():void
+    private _runGame()
     {
-        this._engine.runRenderLoop(() => {
-            this._scene.render();
-        });
+        window.addEventListener('keydown', (evt) => {
+            if (evt.keyCode == 32)
+            {
 
-        window.addEventListener('resize', () => {
-            this._engine.resize();
-        });
+            }
+        })
     }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-    let game = new Game('renderCanvas');
-    game.createScene();
-    game.animate();
+    new Game('renderCanvas');
 });
