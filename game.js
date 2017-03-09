@@ -13,13 +13,11 @@ var Game = (function () {
     }
     Game.prototype.initScene = function () {
         this.scene = new BABYLON.Scene(this.engine);
-        var camera = new BABYLON.FreeCamera('FreeCam', new BABYLON.Vector3(0, 5, -20), this.scene);
-        camera.attachControl(this.engine.getRenderingCanvas());
-        camera.keysUp.push(87);
-        camera.keysDown.push(83);
-        camera.keysLeft.push(65);
-        camera.keysRight.push(68);
-        var light = new BABYLON.HemisphericLight('hemisphericLight', new BABYLON.Vector3(0, 1, 0), this.scene);
+        this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+        this.scene.fogDensity = 0.05;
+        this.scene.enablePhysics(new BABYLON.Vector3(0, -4, 0), new BABYLON.CannonJSPlugin());
+        var camera = new BABYLON.FollowCamera('FollowCam', new BABYLON.Vector3(0, 0, 0), this.scene);
+        var light = new BABYLON.DirectionalLight('dirLight', new BABYLON.Vector3(-10, -10, -10), this.scene);
         light.intensity *= 1.5;
         var loader = new Preloader(this);
         loader.callback = this.run.bind(this);
@@ -33,6 +31,7 @@ var Game = (function () {
             _this._init();
             _this.engine.runRenderLoop(function () {
                 _this.scene.render();
+                _this.player.body.position.z += 0.05;
             });
             _this._runGame();
         });
@@ -41,14 +40,34 @@ var Game = (function () {
         this.scene.debugLayer.show();
         var res = this.createAsset('nature_small');
         this.prepWorld(res);
+        this.addPlayer();
+    };
+    Game.prototype.addPlayer = function () {
+        this.player = new Player(this.scene);
+        this.shadowGenerator.getShadowMap().renderList.push(this.player.body);
+        this.scene.getCameraByName('FollowCam').lockedTarget = this.player.body;
+        this.scene.getCameraByName('FollowCam').radius = 15;
+        this.scene.getCameraByName('FollowCam').rotationOffset = 120;
+        this.scene.getCameraByName('FollowCam').heightOffset = 5;
+        this.player.body.physicsImpostor = new BABYLON.PhysicsImpostor(this.player.body, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 0.8, restitution: 0 }, this.scene);
     };
     Game.prototype.prepWorld = function (assetToUse) {
         var range = 100;
+        var ground1 = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, this.scene);
+        var ground2 = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, this.scene);
+        this.shadowGenerator = new BABYLON.ShadowGenerator(1024, this.scene.getLightByID('dirLight'));
         for (var i = 0; i < assetToUse.length; i++) {
             assetToUse[i].position.x = Math.random() * range - range / 2;
             assetToUse[i].position.z = Math.random() * range - range / 2;
             assetToUse[i].rotation.y = Math.PI;
+            this.shadowGenerator.getShadowMap().renderList.push(assetToUse[i]);
         }
+        this.shadowGenerator.setDarkness(0.5);
+        this.shadowGenerator.useBlurVarianceShadowMap = true;
+        ground1.receiveShadows = true;
+        ground2.receiveShadows = true;
+        ground1.physicsImpostor = new BABYLON.PhysicsImpostor(ground1, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
+        ground2.physicsImpostor = new BABYLON.PhysicsImpostor(ground2, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
     };
     Game.prototype.createAsset = function (name, mode) {
         if (mode === void 0) { mode = Game.SELF; }
@@ -71,10 +90,12 @@ var Game = (function () {
         return res;
     };
     Game.prototype._runGame = function () {
-        window.addEventListener('keydown', function (evt) {
+        var _this = this;
+        window.addEventListener('keyup', function (evt) {
             switch (evt.keyCode) {
                 case 32:
                     console.log("In space!!!!!!!!!");
+                    _this.player.body.physicsImpostor.applyImpulse(new BABYLON.Vector3(0, 6, 0), _this.player.body.getAbsolutePosition());
                     break;
             }
         });
