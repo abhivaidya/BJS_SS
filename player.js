@@ -1,10 +1,11 @@
 var Player = (function () {
-    function Player(scene) {
-        this.width = 1;
-        this.height = 3;
-        this.depth = 1;
-        this.body = BABYLON.MeshBuilder.CreateBox("player", { width: this.width, height: this.height, depth: this.depth }, scene);
-        this.body.position.y = this.height / 2;
+    function Player(scene, mesh) {
+        this.width = 2;
+        this.height = 1;
+        this.depth = 3;
+        this.body = mesh;
+        this.body.position.y = this.height / 2 - 0.1;
+        this.body.rotation.y = Math.PI;
     }
     return Player;
 }());

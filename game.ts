@@ -82,15 +82,16 @@ class Game
         this.scene.debugLayer.show();
 
         let res = this.createAsset('nature_small');
+        let car = this.createAsset('car');
 
         this.prepWorld(res as Array<BABYLON.Mesh>);
 
-        this.addPlayer();
+        this.addPlayer(car as Array<BABYLON.Mesh>);
     }
 
-    private addPlayer()
+    private addPlayer(asset:Array<BABYLON.Mesh>)
     {
-        this.player = new Player(this.scene);
+        this.player = new Player(this.scene, asset[0]);
 
         this.shadowGenerator.getShadowMap().renderList.push(this.player.body);
 
@@ -99,7 +100,7 @@ class Game
         (<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).rotationOffset = 120;
         (<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).heightOffset = 5;
 
-        this.player.body.physicsImpostor = new BABYLON.PhysicsImpostor(this.player.body, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 0.8, restitution: 0 }, this.scene);
+        this.player.body.physicsImpostor = new BABYLON.PhysicsImpostor(this.player.body, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0.8, restitution: 0 }, this.scene);
     }
 
     private prepWorld(assetToUse:Array<BABYLON.Mesh>)
@@ -122,6 +123,8 @@ class Game
 
         this.shadowGenerator.setDarkness(0.5);
         this.shadowGenerator.useBlurVarianceShadowMap = true;
+        this.shadowGenerator.bias = 0.0001;
+        this.shadowGenerator.blurScale = 2;
 
         ground1.receiveShadows = true;
         ground2.receiveShadows = true;

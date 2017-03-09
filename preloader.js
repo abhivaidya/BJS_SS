@@ -9,6 +9,7 @@ var Preloader = (function () {
     }
     Preloader.prototype.loadAssets = function () {
         this._addMesh('', 'nature_small');
+        this._addMesh('', 'car');
         this._loader.load();
     };
     Preloader.prototype._onFinish = function () {

@@ -20,6 +20,7 @@ class Preloader
     public loadAssets()
     {
         this._addMesh('', 'nature_small');
+        this._addMesh('', 'car');
         this._loader.load();
     }
 

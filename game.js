@@ -39,17 +39,18 @@ var Game = (function () {
     Game.prototype._init = function () {
         this.scene.debugLayer.show();
         var res = this.createAsset('nature_small');
+        var car = this.createAsset('car');
         this.prepWorld(res);
-        this.addPlayer();
+        this.addPlayer(car);
     };
-    Game.prototype.addPlayer = function () {
-        this.player = new Player(this.scene);
+    Game.prototype.addPlayer = function (asset) {
+        this.player = new Player(this.scene, asset[0]);
         this.shadowGenerator.getShadowMap().renderList.push(this.player.body);
         this.scene.getCameraByName('FollowCam').lockedTarget = this.player.body;
         this.scene.getCameraByName('FollowCam').radius = 15;
         this.scene.getCameraByName('FollowCam').rotationOffset = 120;
         this.scene.getCameraByName('FollowCam').heightOffset = 5;
-        this.player.body.physicsImpostor = new BABYLON.PhysicsImpostor(this.player.body, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 0.8, restitution: 0 }, this.scene);
+        this.player.body.physicsImpostor = new BABYLON.PhysicsImpostor(this.player.body, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0.8, restitution: 0 }, this.scene);
     };
     Game.prototype.prepWorld = function (assetToUse) {
         var range = 100;
@@ -64,6 +65,8 @@ var Game = (function () {
         }
         this.shadowGenerator.setDarkness(0.5);
         this.shadowGenerator.useBlurVarianceShadowMap = true;
+        this.shadowGenerator.bias = 0.0001;
+        this.shadowGenerator.blurScale = 2;
         ground1.receiveShadows = true;
         ground2.receiveShadows = true;
         ground1.physicsImpostor = new BABYLON.PhysicsImpostor(ground1, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
