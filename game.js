@@ -13,12 +13,10 @@ var Game = (function () {
     }
     Game.prototype.initScene = function () {
         this.scene = new BABYLON.Scene(this.engine);
-        this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-        this.scene.fogDensity = 0.05;
-        this.scene.enablePhysics(new BABYLON.Vector3(0, -4, 0), new BABYLON.CannonJSPlugin());
-        var camera = new BABYLON.FollowCamera('FollowCam', new BABYLON.Vector3(0, 0, 0), this.scene);
+        var camera = new BABYLON.FreeCamera('FreeCam', new BABYLON.Vector3(-50, 55, -60), this.scene);
+        camera.setTarget(BABYLON.Vector3.Zero());
         var light = new BABYLON.DirectionalLight('dirLight', new BABYLON.Vector3(-10, -10, -10), this.scene);
-        light.intensity *= 1.5;
+        light.intensity = 1.5;
         var loader = new Preloader(this);
         loader.callback = this.run.bind(this);
         loader.loadAssets();
@@ -31,46 +29,32 @@ var Game = (function () {
             _this._init();
             _this.engine.runRenderLoop(function () {
                 _this.scene.render();
-                _this.player.body.position.z += 0.05;
             });
             _this._runGame();
         });
     };
     Game.prototype._init = function () {
         this.scene.debugLayer.show();
-        var res = this.createAsset('nature_small');
-        var car = this.createAsset('car');
-        this.prepWorld(res);
-        this.addPlayer(car);
+        this.prepWorld();
+        this.addPlayer();
     };
-    Game.prototype.addPlayer = function (asset) {
-        this.player = new Player(this.scene, asset[0]);
-        this.shadowGenerator.getShadowMap().renderList.push(this.player.body);
-        this.scene.getCameraByName('FollowCam').lockedTarget = this.player.body;
-        this.scene.getCameraByName('FollowCam').radius = 15;
-        this.scene.getCameraByName('FollowCam').rotationOffset = 120;
-        this.scene.getCameraByName('FollowCam').heightOffset = 5;
-        this.player.body.physicsImpostor = new BABYLON.PhysicsImpostor(this.player.body, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0.8, restitution: 0 }, this.scene);
+    Game.prototype.addPlayer = function () {
+        this.player = new Player(this.scene);
+        this.shadowGenerator.getShadowMap().renderList.push(this.player.body.mesh);
+        this.scene.getCameraByName('FreeCam').lockedTarget = this.player.body.mesh;
     };
     Game.prototype.prepWorld = function (assetToUse) {
-        var range = 100;
-        var ground1 = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, this.scene);
-        var ground2 = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, this.scene);
+        if (assetToUse === void 0) { assetToUse = null; }
+        var ground1 = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100, subdivisions: 2, updatable: false }, this.scene);
+        var groundMat = new BABYLON.StandardMaterial("groundMat", this.scene);
+        ground1.material = groundMat;
+        groundMat.specularColor = BABYLON.Color3.Black();
+        ground1.receiveShadows = true;
         this.shadowGenerator = new BABYLON.ShadowGenerator(1024, this.scene.getLightByID('dirLight'));
-        for (var i = 0; i < assetToUse.length; i++) {
-            assetToUse[i].position.x = Math.random() * range - range / 2;
-            assetToUse[i].position.z = Math.random() * range - range / 2;
-            assetToUse[i].rotation.y = Math.PI;
-            this.shadowGenerator.getShadowMap().renderList.push(assetToUse[i]);
-        }
         this.shadowGenerator.setDarkness(0.5);
         this.shadowGenerator.useBlurVarianceShadowMap = true;
         this.shadowGenerator.bias = 0.0001;
         this.shadowGenerator.blurScale = 2;
-        ground1.receiveShadows = true;
-        ground2.receiveShadows = true;
-        ground1.physicsImpostor = new BABYLON.PhysicsImpostor(ground1, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
-        ground2.physicsImpostor = new BABYLON.PhysicsImpostor(ground2, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
     };
     Game.prototype.createAsset = function (name, mode) {
         if (mode === void 0) { mode = Game.SELF; }
@@ -94,13 +78,26 @@ var Game = (function () {
     };
     Game.prototype._runGame = function () {
         var _this = this;
-        window.addEventListener('keyup', function (evt) {
+        window.addEventListener('keydown', function (evt) {
             switch (evt.keyCode) {
-                case 32:
-                    console.log("In space!!!!!!!!!");
-                    _this.player.body.physicsImpostor.applyImpulse(new BABYLON.Vector3(0, 6, 0), _this.player.body.getAbsolutePosition());
+                case 83:
+                    _this.player.body.mesh.translate(BABYLON.Vector3.Forward(), 0.025 * _this.engine.getDeltaTime());
+                    break;
+                case 87:
+                    _this.player.body.mesh.translate(new BABYLON.Vector3(0, 0, -1), 0.025 * _this.engine.getDeltaTime());
+                    break;
+                case 68:
+                    _this.player.body.mesh.translate(new BABYLON.Vector3(-1, 0, 0), 0.025 * _this.engine.getDeltaTime());
+                    break;
+                case 65:
+                    _this.player.body.mesh.translate(new BABYLON.Vector3(1, 0, 0), 0.025 * _this.engine.getDeltaTime());
                     break;
             }
+        });
+        window.addEventListener('mousemove', function () {
+            var pickResult = _this.scene.pick(_this.scene.pointerX, _this.scene.pointerY);
+            if (pickResult.hit)
+                _this.player.body.mesh.lookAt(pickResult.pickedPoint);
         });
     };
     return Game;

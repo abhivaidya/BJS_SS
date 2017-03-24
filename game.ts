@@ -32,13 +32,11 @@ class Game
     private initScene()
     {
         this.scene = new BABYLON.Scene(this.engine);
-        this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-        this.scene.fogDensity = 0.05;
+        //this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+        //this.scene.fogDensity = 0.005;
 
-        this.scene.enablePhysics(new BABYLON.Vector3(0, -4, 0), new BABYLON.CannonJSPlugin());
-
-        //let camera = new BABYLON.FreeCamera('FreeCam', new BABYLON.Vector3(0, 5, -20), this.scene);
-        let camera = new BABYLON.FollowCamera('FollowCam', new BABYLON.Vector3(0, 0, 0), this.scene);
+        let camera = new BABYLON.FreeCamera('FreeCam', new BABYLON.Vector3(-50, 55, -60), this.scene);
+        //let camera = new BABYLON.FollowCamera('FollowCam', new BABYLON.Vector3(0, 0, 0), this.scene);
         //camera.attachControl(this.engine.getRenderingCanvas());
         /*camera.keysUp.push(87); // "w"
 	    camera.keysDown.push(83); // "s"
@@ -46,9 +44,11 @@ class Game
 	    camera.keysRight.push(68); // "d"*/
         //camera.wheelPrecision *= 10;
 
+        camera.setTarget(BABYLON.Vector3.Zero());
+
         //let light = new BABYLON.HemisphericLight('hemisphericLight', new BABYLON.Vector3(0, 1, 0), this.scene);
         let light = new BABYLON.DirectionalLight('dirLight', new BABYLON.Vector3(-10, -10, -10), this.scene);
-        light.intensity *= 1.5;
+        light.intensity = 1.5;
         //light.diffuse = BABYLON.Color3.FromInts(255, 245, 0);
 
         let loader = new Preloader(this);
@@ -69,8 +69,8 @@ class Game
             this.engine.runRenderLoop(() => {
                 this.scene.render();
 
-                this.player.body.position.z += 0.05;
-
+                //this.player.body.position.z += 0.05;
+                //this.player.move();
             });
 
             this._runGame();
@@ -81,59 +81,43 @@ class Game
     {
         this.scene.debugLayer.show();
 
-        let res = this.createAsset('nature_small');
-        let car = this.createAsset('car');
+        //let res = this.createAsset('nature_small');
+        //let ship = this.createAsset('ship');
 
-        this.prepWorld(res as Array<BABYLON.Mesh>);
-
-        this.addPlayer(car as Array<BABYLON.Mesh>);
+        this.prepWorld();
+        this.addPlayer();
     }
 
-    private addPlayer(asset:Array<BABYLON.Mesh>)
+    private addPlayer()
     {
-        this.player = new Player(this.scene, asset[0]);
+        this.player = new Player(this.scene);
 
-        this.shadowGenerator.getShadowMap().renderList.push(this.player.body);
+        this.shadowGenerator.getShadowMap().renderList.push(this.player.body.mesh);
 
-        (<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).lockedTarget = this.player.body;
-        (<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).radius = 15;
-        (<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).rotationOffset = 120;
-        (<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).heightOffset = 5;
-
-        this.player.body.physicsImpostor = new BABYLON.PhysicsImpostor(this.player.body, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0.8, restitution: 0 }, this.scene);
+        //(<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).lockedTarget = this.player.body.mesh;
+        //(<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).radius = 15;
+        //(<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).rotationOffset = 120;
+        //(<BABYLON.FollowCamera>this.scene.getCameraByName('FollowCam')).heightOffset = 5;
+        (<BABYLON.FreeCamera>this.scene.getCameraByName('FreeCam')).lockedTarget = this.player.body.mesh;
     }
 
-    private prepWorld(assetToUse:Array<BABYLON.Mesh>)
+    private prepWorld(assetToUse:Array<BABYLON.Mesh> = null)
     {
-        let range = 100;
-
-        let ground1 = BABYLON.MeshBuilder.CreateGround("ground", {width: 100, height:100}, this.scene);
-        let ground2 = BABYLON.MeshBuilder.CreateGround("ground", {width: 100, height:100}, this.scene);
+        let ground1 = BABYLON.MeshBuilder.CreateGround("ground", {width:100, height:100, subdivisions:2, updatable:false}, this.scene);
+        let groundMat = new BABYLON.StandardMaterial("groundMat", this.scene);
+        ground1.material = groundMat;
+        groundMat.specularColor = BABYLON.Color3.Black();
+        //groundMat.wireframe = true;
+        ground1.receiveShadows = true;
 
         this.shadowGenerator = new BABYLON.ShadowGenerator(1024, <BABYLON.DirectionalLight>this.scene.getLightByID('dirLight'));
-
-        for(var i = 0; i < assetToUse.length; i++)
-        {
-            assetToUse[i].position.x = Math.random() * range - range/2;
-            assetToUse[i].position.z = Math.random() * range - range/2;
-            assetToUse[i].rotation.y = Math.PI;
-
-            this.shadowGenerator.getShadowMap().renderList.push(assetToUse[i]);
-        }
-
         this.shadowGenerator.setDarkness(0.5);
         this.shadowGenerator.useBlurVarianceShadowMap = true;
         this.shadowGenerator.bias = 0.0001;
         this.shadowGenerator.blurScale = 2;
-
-        ground1.receiveShadows = true;
-        ground2.receiveShadows = true;
-
-        ground1.physicsImpostor = new BABYLON.PhysicsImpostor(ground1, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
-        ground2.physicsImpostor = new BABYLON.PhysicsImpostor(ground2, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
     }
 
-    public createAsset(name:string, mode:number=Game.SELF) : Array<BABYLON.AbstractMesh>
+    public createAsset(name:string, mode:number = Game.SELF) : Array<BABYLON.AbstractMesh>
     {
         let res : Array<BABYLON.AbstractMesh> = [];
 
@@ -160,14 +144,28 @@ class Game
 
     private _runGame()
     {
-        window.addEventListener('keyup', (evt) => {
+        window.addEventListener('keydown', (evt) => {
             switch(evt.keyCode)
             {
-                case 32:
-                    console.log("In space!!!!!!!!!");
-                    this.player.body.physicsImpostor.applyImpulse(new BABYLON.Vector3(0, 6, 0), this.player.body.getAbsolutePosition());
+                case 83:
+                    this.player.body.mesh.translate(BABYLON.Vector3.Forward(), 0.025 * this.engine.getDeltaTime());
+                    break;
+                case 87:
+                    this.player.body.mesh.translate(new BABYLON.Vector3(0, 0, -1), 0.025 * this.engine.getDeltaTime());
+                    break;
+                case 68:
+                    this.player.body.mesh.translate(new BABYLON.Vector3(-1, 0, 0), 0.025 * this.engine.getDeltaTime());
+                    break;
+                case 65:
+                    this.player.body.mesh.translate(new BABYLON.Vector3(1, 0, 0), 0.025 * this.engine.getDeltaTime());
                     break;
             }
+        });
+
+        window.addEventListener('mousemove', () => {
+            let pickResult = this.scene.pick(this.scene.pointerX, this.scene.pointerY);
+            if(pickResult.hit)
+                this.player.body.mesh.lookAt(pickResult.pickedPoint);
         });
     }
 }

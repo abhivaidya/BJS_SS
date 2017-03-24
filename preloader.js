@@ -8,8 +8,6 @@ var Preloader = (function () {
         this._loader.onFinish = this._onFinish.bind(this);
     }
     Preloader.prototype.loadAssets = function () {
-        this._addMesh('', 'nature_small');
-        this._addMesh('', 'car');
         this._loader.load();
     };
     Preloader.prototype._onFinish = function () {
@@ -32,6 +30,7 @@ var Preloader = (function () {
             m.setEnabled(false);
             this._game.assets[t.name].push(m);
         }
+        console.log("%c Finished : " + t.name, 'background: #333; color: #bada55');
     };
     return Preloader;
 }());
