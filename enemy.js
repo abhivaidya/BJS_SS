@@ -1,5 +1,5 @@
-var Player = (function () {
-    function Player(scene) {
+var Enemy = (function () {
+    function Enemy(scene) {
         this.nb = 27;
         this.layers = 3;
         this.body = new BABYLON.SolidParticleSystem("SPS", scene);
@@ -9,18 +9,14 @@ var Player = (function () {
         var mesh = this.body.buildMesh();
         this.body.mesh.position.y = -0.75;
     }
-    Player.prototype.myPositionFunction = function (particle, i, s) {
+    Enemy.prototype.myPositionFunction = function (particle, i, s) {
         particle.position.x = i % 3 - 1;
         particle.position.y = Math.floor(i / 9) + 1;
         particle.position.z = Math.floor((i % 9) / 3) - 1;
-        particle.color = new BABYLON.Color4(0.07, 0.07, 0.07, 1);
+        particle.color = new BABYLON.Color4(0.07, 0.14, 0.07, 1);
     };
-    Player.prototype.move = function () {
-        if (this.body) {
-            this.body.mesh.rotation.x = 0;
-            this.body.mesh.rotation.z = 0;
-        }
+    Enemy.prototype.move = function () {
     };
-    return Player;
+    return Enemy;
 }());
-//# sourceMappingURL=player.js.map
+//# sourceMappingURL=enemy.js.map

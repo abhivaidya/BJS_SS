@@ -12,6 +12,7 @@ class Game
 
     private shadowGenerator;
     private player;
+    private enemies: Array<Enemy>;
 
     constructor(canvasElement:string)
     {
@@ -21,6 +22,8 @@ class Game
 
         this.assets = [];
         this.scene = null;
+
+        this.enemies = [];
 
         window.addEventListener("resize", () => {
             this.engine.resize();
@@ -48,7 +51,7 @@ class Game
 
         //let light = new BABYLON.HemisphericLight('hemisphericLight', new BABYLON.Vector3(0, 1, 0), this.scene);
         let light = new BABYLON.DirectionalLight('dirLight', new BABYLON.Vector3(-10, -10, -10), this.scene);
-        light.intensity = 1.5;
+        //light.intensity = 1.5;
         //light.diffuse = BABYLON.Color3.FromInts(255, 245, 0);
 
         let loader = new Preloader(this);
@@ -70,7 +73,12 @@ class Game
                 this.scene.render();
 
                 //this.player.body.position.z += 0.05;
-                //this.player.move();
+                this.player.move();
+
+                for(let enemy of this.enemies)
+                {
+                    enemy.body.mesh.lookAt(this.player.body.mesh.position);
+                }
             });
 
             this._runGame();
@@ -86,11 +94,19 @@ class Game
 
         this.prepWorld();
         this.addPlayer();
+
+        this.addEnemy();
+        this.addEnemy();
+        this.addEnemy();
+        this.addEnemy();
+        this.addEnemy();
+        this.addEnemy();
     }
 
     private addPlayer()
     {
         this.player = new Player(this.scene);
+        this.player.body.mesh.position.z = -50;
 
         this.shadowGenerator.getShadowMap().renderList.push(this.player.body.mesh);
 
@@ -101,9 +117,20 @@ class Game
         (<BABYLON.FreeCamera>this.scene.getCameraByName('FreeCam')).lockedTarget = this.player.body.mesh;
     }
 
+    private addEnemy()
+    {
+        let enemy = new Enemy(this.scene);
+        enemy.body.mesh.position.x = Math.random() * 200 - 100;
+        enemy.body.mesh.position.z = Math.random() * 200 - 100;
+
+        this.shadowGenerator.getShadowMap().renderList.push(enemy.body.mesh);
+
+        this.enemies.push(enemy);
+    }
+
     private prepWorld(assetToUse:Array<BABYLON.Mesh> = null)
     {
-        let ground1 = BABYLON.MeshBuilder.CreateGround("ground", {width:100, height:100, subdivisions:2, updatable:false}, this.scene);
+        let ground1 = BABYLON.MeshBuilder.CreateGround("ground", {width:200, height:200, subdivisions:2, updatable:false}, this.scene);
         let groundMat = new BABYLON.StandardMaterial("groundMat", this.scene);
         ground1.material = groundMat;
         groundMat.specularColor = BABYLON.Color3.Black();
@@ -165,7 +192,9 @@ class Game
         window.addEventListener('mousemove', () => {
             let pickResult = this.scene.pick(this.scene.pointerX, this.scene.pointerY);
             if(pickResult.hit)
+            {
                 this.player.body.mesh.lookAt(pickResult.pickedPoint);
+            }
         });
     }
 }
