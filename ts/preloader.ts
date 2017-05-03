@@ -19,8 +19,8 @@ class Preloader
 
     public loadAssets()
     {
-        //this._addMesh('', 'nature_small');
-        //this._addMesh('', 'ship');
+        this._addMesh('', 'environment');
+        //this._addMesh('', 'tiles');
         this._loader.load();
     }
 
@@ -52,7 +52,7 @@ class Preloader
             (m as BABYLON.Mesh).convertToFlatShadedMesh();
             m.setEnabled(false);
             this._game.assets[t.name].push(m);
-            //console.log(`%c Loaded : ${m.name}`, 'background: #333; color: #bada55');
+            console.log(`%c Loaded : ${m.name}`, 'background: #333; color: #bada55');
         }
         console.log(`%c Finished : ${t.name}`, 'background: #333; color: #bada55');
 

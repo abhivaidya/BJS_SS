@@ -8,6 +8,7 @@ var Preloader = (function () {
         this._loader.onFinish = this._onFinish.bind(this);
     }
     Preloader.prototype.loadAssets = function () {
+        this._addMesh('', 'environment');
         this._loader.load();
     };
     Preloader.prototype._onFinish = function () {
@@ -29,9 +30,9 @@ var Preloader = (function () {
             m.convertToFlatShadedMesh();
             m.setEnabled(false);
             this._game.assets[t.name].push(m);
+            console.log("%c Loaded : " + m.name, 'background: #333; color: #bada55');
         }
         console.log("%c Finished : " + t.name, 'background: #333; color: #bada55');
     };
     return Preloader;
 }());
-//# sourceMappingURL=preloader.js.map
